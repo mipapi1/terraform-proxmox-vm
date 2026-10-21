@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Format
+        run: terraform fmt -check -recursive
+      - name: Validate module
+        run: terraform init -backend=false -input=false && terraform validate
+      - name: Validate examples (against this checkout)
+        run: |
+          for d in examples/*/; do
+            sed -i 's#source *= *"github.com/mipapi1/terraform-proxmox-vm?ref=[^"]*"#source = "../.."#' "$d/main.tf"
+            (cd "$d" && terraform init -backend=false -input=false >/dev/null && terraform validate)
+          done
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for secrets (gitleaks)
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.30.1 git /repo --redact --verbose
