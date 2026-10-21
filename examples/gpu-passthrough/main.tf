@@ -27,6 +27,11 @@ variable "proxmox_api_token" {
   sensitive = true
 }
 
+variable "ssh_public_keys" {
+  description = "Public keys for the admin user, e.g. [\"ssh-ed25519 AAAA... you@laptop\"]"
+  type        = list(string)
+}
+
 # Find the values on each node with: lspci -nn -s 00:02.0 and
 # lspci -vmmn -s 00:02.0 (subsystem), and the group under /sys/kernel/iommu_groups
 resource "proxmox_hardware_mapping_pci" "igpu" {
@@ -64,7 +69,7 @@ module "k8s" {
   gateway = "192.168.20.1"
 
   vm_datastore_id = "local-zfs"
-  ssh_public_keys = [file("~/.ssh/id_ed25519.pub")]
+  ssh_public_keys = var.ssh_public_keys
 
   pci_mapping = proxmox_hardware_mapping_pci.igpu.name
 }

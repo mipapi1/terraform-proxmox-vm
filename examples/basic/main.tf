@@ -20,6 +20,11 @@ variable "proxmox_api_token" {
   sensitive = true
 }
 
+variable "ssh_public_keys" {
+  description = "Public keys for the admin user, e.g. [\"ssh-ed25519 AAAA... you@laptop\"]"
+  type        = list(string)
+}
+
 module "web" {
   source = "github.com/mipapi1/terraform-proxmox-vm?ref=v1.0.0"
 
@@ -37,7 +42,7 @@ module "web" {
 
   vm_datastore_id = "local-zfs"
   admin_username  = "ops"
-  ssh_public_keys = [file("~/.ssh/id_ed25519.pub")]
+  ssh_public_keys = var.ssh_public_keys
   timezone        = "Europe/Berlin"
   tags            = ["web", "terraform"]
 }
