@@ -1,0 +1,46 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Version updates for this module: the Proxmox provider, the examples and CI.",
+  "extends": ["config:recommended"],
+  "enabledManagers": ["terraform", "github-actions", "custom.regex"],
+  "ignorePaths": ["**/node_modules/**"],
+  "customManagers": [
+    {
+      "description": "Container images run by CI steps (docker run)",
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
+      "matchStrings": ["docker run [^\\n]*?(?<depName>(?:ghcr\\.io|docker\\.io)/[a-z0-9.\\-/]+):(?<currentValue>v?[0-9][^\\s@]*)"],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "The module and examples state a minimum provider version (>=). Raise it (the minimum, not a pin) when a new provider release comes out, so users get a tested floor; bpg/proxmox is 0.x, so every minor counts as major for Renovate.",
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["required_provider"],
+      "matchPackageNames": ["bpg/proxmox"],
+      "rangeStrategy": "bump",
+      "groupName": "bpg/proxmox provider",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Terraform itself: the module only needs >= 1.5; leave it",
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["required_version"],
+      "enabled": false
+    },
+    {
+      "description": "The examples reference this module's own release tag; bump them when a release is cut",
+      "matchManagers": ["terraform"],
+      "matchDepTypes": ["module"],
+      "matchPackageNames": ["/mipapi1/terraform-proxmox-vm/"],
+      "enabled": false
+    },
+    {
+      "description": "New runner images (ubuntu-XX.04) can break the CI steps: wait for approval on the Dependency Dashboard",
+      "matchManagers": ["github-actions"],
+      "matchDepNames": ["ubuntu"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}
